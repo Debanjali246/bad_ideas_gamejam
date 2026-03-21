@@ -5,7 +5,8 @@ class Player(pygame.Rect):
     # put accodingly even option toscale
     def __init__(self,gamewindow,startx,starty,fat,tall,image,RATIO):
         self.gamewindow=gamewindow
-
+        self.startx=startx
+        self.starty=starty
         playerimage=pygame.image.load(image)
         playerimage=pygame.transform.scale(playerimage,(fat,tall))
         pygame.Rect.__init__(self,startx,starty,fat,tall)
@@ -19,16 +20,16 @@ class Player(pygame.Rect):
         
         
         
-    def move(self):
+    def move(self,speed):
         keys=pygame.key.get_pressed()
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.x-=15 #making a rect objcet of self.carcter is so so easy than getting self.startx+=5 trust me man
+            self.x=max(0,self.x-speed)
         if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            self.y+=15
+            self.y=min(self.y+speed,self.gamewindow.get_height()-self.height)
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.x+=15
+            self.x=min(self.x+speed,self.gamewindow.get_width()-self.width)
         if keys[pygame.K_w] or keys[pygame.K_UP]:
-            self.y-=15
+            self.y = max(self.y-speed,0)
         
     def draw(self):
         self.gamewindow.blit(self.image,(self.topleft))
