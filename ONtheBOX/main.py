@@ -5,9 +5,14 @@ from backgd import Background
 from stuff import Stuff
 clock=pygame.time.Clock() #clockobject made
 
-HEIGHT=100 #we need to write a code to automatically find the size of
-LENGTH=200 #the screen of the player and adjust the screen size automatically i gess
+HEIGHT=600 #we need to write a code to automatically find the size of
+LENGTH=1000 #the screen of the player and adjust the screen size automatically i gess
 FPS=12
+PLAYER_FAT=128
+PLAYER_HEIGHT=128
+PLAYER_X=150
+PLAYER_Y=150
+ICON=pygame.image.load("enemies\\CatBasket.png")
 """we made them constant for easy to use"""
 
 pygame.init #nothing just starting on game
@@ -15,6 +20,7 @@ pygame.init #nothing just starting on game
 screen = pygame.display.set_mode((LENGTH,HEIGHT))
 pygame.display.set_caption("we are on the box")
 
+pygame.display.set_icon(ICON)
 
 
 world=Background(screen,(69,69,69),"background/SKY.png")
@@ -27,7 +33,7 @@ gameloop=True
 object=pygame.Rect(300,400,32,32)
 
 #define player and objects(for now object and plaer both by player class)
-tom=Player(screen,150,150,64,128,None,(100,200,150))
+tom=Player(screen,PLAYER_X,PLAYER_Y,PLAYER_FAT,PLAYER_HEIGHT,"caracter\character.png",4)
 jerry=Stuff(screen,150,0,64,64,None,(100,200,200))
 ground=Stuff(screen,0,536,1000,64,None,(100,255,200))
 
