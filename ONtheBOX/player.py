@@ -12,7 +12,7 @@ class Player(pygame.Rect):
         
         BASE_DIR = os.path.dirname(__file__)
         # player_L=pygame.image.load(image)
-        self.imageR = pygame.image.load(os.path.join(BASE_DIR, "GUY", "greenboy.png"))
+        self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "greenboy.png"))
         self.imageL = pygame.transform.flip(self.imageR, True, False)
         self.image = self.imageR
         self.direction = "left"
@@ -54,7 +54,7 @@ class Player(pygame.Rect):
                 if self.vel_y > 0:  # falling
                     self.bottom = tile.top
                 elif self.vel_y < 0:  # jumping
-                    self.top = tile.center
+                    self.top = tile.bottom
                 self.vel_y = 0
         
     def movement(self,speed):
