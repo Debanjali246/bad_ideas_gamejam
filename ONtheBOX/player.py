@@ -1,7 +1,7 @@
 import pygame
 import os
 GRAVITY = 1
-PLAYER_VEL = -10
+PLAYER_VEL = -15
 pygame.init()
 class Player(pygame.Rect):
     #pygame.draw.rect(screen, color, rect)and pygame.Rect diffrece todo->dynamically find size of image and 
@@ -21,14 +21,16 @@ class Player(pygame.Rect):
         return frames
 
 
-    def __init__(self,gamewindow,startx,starty,fat,tall,tiles):
+    def __init__(self,gamewindow,startx,starty,fat,tall,tiles,enemies):
         self.gamewindow=gamewindow
         self.tiles=tiles
+        self.health=5
+        self.enemies=enemies
         
         BASE_DIR = os.path.dirname(__file__)
-        # player_L=pygame.image.load(image)
+        
+        
         self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk.png"), 32,32)
-        self.jump_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "jumpframe.png"), 20, 35)
 
         self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png"))
         self.imageL = pygame.transform.flip(self.imageR, True, False)
@@ -36,11 +38,12 @@ class Player(pygame.Rect):
         self.direction = "left"
 
         self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png")).convert_alpha()
+        self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jumpframe.png")).convert_alpha()  
 
         # Flip versions for animation some advance python code must undestand more
         self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
-        self.jump_frames_L = [pygame.transform.flip(f, True, False) for f in self.jump_frames]
-
+        self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)  
+    
         # Animationstate
         self.state = "idle"
         self.frame_index = 0
@@ -54,10 +57,89 @@ class Player(pygame.Rect):
         pygame.Rect.__init__(self,startx,starty,fat,tall)
 
         #todo remove the player as in idle already passed him/her
-    
-    def update_direction(self,speed):
-        #is this neeeded now ? todo justv see
+    def helthchange(self):
+        BASE_DIR = os.path.dirname(__file__)
+        if self.health==5:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk.png"), 32,32)
 
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png"))
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+            self.direction = "left"
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png")).convert_alpha()
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jumpframe.png")).convert_alpha()  
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)  
+        
+        elif self.health==4:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk5h.png"), 32,32)
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png"))
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+            self.direction = "left"
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png")).convert_alpha()
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump5h.png")).convert_alpha()  
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)
+
+        elif self.health==3:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk4h.png"), 32,32)
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png"))
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+            self.direction = "left"
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png")).convert_alpha()
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump4h.png")).convert_alpha()  
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)  
+        
+        elif self.health==2:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk3h.png"), 32,32)
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png"))
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+            self.direction = "left"
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png")).convert_alpha()
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump3h.png")).convert_alpha()  
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)  
+        
+        elif self.health==1:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk1h.png"), 32,32)
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png"))
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+            self.direction = "left"
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "guy.png")).convert_alpha()
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump2h.png")).convert_alpha()  
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)  
+
+
+
+
+
+
+    def update_direction(self):  # FIX 1 - removed unused speed param
         if self.direction == "right":
             self.image = self.imageR
         elif self.direction == "left":
@@ -91,13 +173,11 @@ class Player(pygame.Rect):
         self.vel_x = 0
         moving=False
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.direction = "right"
+            self.direction = "left"
             moving=True
             self.x=max(0,self.x-speed)
-        # if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            # self.y=min(self.y+speed,self.gamewindow.get_height()-self.height)
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.direction = "left"
+            self.direction = "right"
             moving=True
             self.x=min(self.x+speed,self.gamewindow.get_width()-self.width)
         if keys[pygame.K_w] or keys[pygame.K_UP]:
@@ -111,8 +191,7 @@ class Player(pygame.Rect):
             self.state = "walk"
         else:
             self.state = "idle"
-
-
+        
 
     def jump(self):
         # Only jump if standing on a tile or ground
@@ -122,39 +201,40 @@ class Player(pygame.Rect):
                 on_ground = True
         if on_ground:
             self.vel_y = PLAYER_VEL    
-        # if self.bottom >= self.gamewindow.get_height() - 24:
-        #     self.vel = PLAYER_VEL
+
     def move(self):      
         self.vel_y += GRAVITY
-        self.y += self.vel_y
+        # FIX 2 - removed self.y += self.vel_y here, collision() already does it
 
         self.collision()
-    
+        if self.colliderect(self.enemies):
+            self.health-=1
         # ground collision for now later blocks too
         if self.bottom >= self.gamewindow.get_height():
             self.bottom = self.gamewindow.get_height()
             self.vel_y = 0
-
+        self.helthchange()
 
     def draw(self):
         # SELECT ANIMATION
         if self.state == "walk":
             frames = self.walk_frames if self.direction == "right" else self.walk_frames_L
-        elif self.state == "jump": #need to edit as jump i sjust 1 image now todo
-            frames = self.jump_frames if self.direction == "right" else self.jump_frames_L
+
+            # ANIMATE
+            self.frame_index += self.animation_speed
+            if self.frame_index >= len(frames):
+                self.frame_index = 0
+            self.image = frames[int(self.frame_index)]
+
+        elif self.state == "jump":
+            # FIX 3 - single image so no list indexing, just pick R or L
+            self.image = self.jump_frames if self.direction == "right" else self.jump_frames_L
+
         else:
             self.image = self.idle_frame
-            self.gamewindow.blit(self.image, self.topleft)
-            return
-
-        # ANIMATE logic still uncler gotta study more nad again
-        self.frame_index += self.animation_speed
-        if self.frame_index >= len(frames): #modulo if over 8 go to 0 type shit
-            self.frame_index = 0
-
-        self.image = frames[int(self.frame_index)] #decimal to whole number
 
         self.gamewindow.blit(self.image, self.topleft)
+
 """must find some way to find x and y position to update it and 
  in rect it was as simple as rect.x nad rect.y to find x and y
  lol turns out sisnce i inherted rect so i can directly call rect.x lol 
@@ -165,7 +245,3 @@ class Player(pygame.Rect):
      #   self.gamewindow.blit(self.image,(self.topleft))
  old simple draw is gone now animation wala draw will come
  """
-
-
-       
-      
