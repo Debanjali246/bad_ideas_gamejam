@@ -4,6 +4,7 @@ from player import Player
 from backgd import Background
 from stuff import Stuff
 from enemy import Enemy
+from buttons import Button
 import os 
 BASE_DIR = os.path.dirname(__file__)
 clock=pygame.time.Clock() #clockobject made
@@ -87,6 +88,19 @@ all_blocks = floor + platforms  # keeping them together makes collision easier l
 
 tom=Player(screen,PLAYER_X,PLAYER_Y,PLAYER_FAT,PLAYER_HEIGHT,all_blocks)
 
+menu_state = "game"
+sound_on = True
+font = pygame.font.Font(None, 32)
+resume_btn   = Button(screen, "Resume",       LENGTH//2, HEIGHT//2 - 60)
+settings_btn = Button(screen, "Settings",     LENGTH//2, HEIGHT//2)
+quit_btn     = Button(screen, "Quit",         LENGTH//2, HEIGHT//2 + 60)
+audio_btn    = Button(screen, "Audio",        LENGTH//2, HEIGHT//2 - 30)
+sback_btn    = Button(screen, "Back",         LENGTH//2, HEIGHT//2 + 40)
+toggle_btn   = Button(screen, "Toggle Sound", LENGTH//2, HEIGHT//2 - 30)
+aback_btn    = Button(screen, "Back",         LENGTH//2, HEIGHT//2 + 40)
+restart_btn  = Button(screen, "Restart",      LENGTH//2, HEIGHT//2 - 25)
+mainmenu_btn = Button(screen, "Main Menu",    LENGTH//2, HEIGHT//2 + 25)
+
 while gameloop==True:
         
    
@@ -100,7 +114,7 @@ while gameloop==True:
     screen.blit(lives_text, (10, 10))
 
     if not game_over:
-        tom.movement(PLAYER_SPEED)   #  moved up here (for some reason)
+        tom.movement(PLAYER_SPEED)   #  moved up here (for some)
         tom.move()
         tom.draw()
         cat.draw()
@@ -128,6 +142,40 @@ while gameloop==True:
         died_rect = died_text.get_rect(center=(LENGTH//2, HEIGHT//2 + 20))
         screen.blit(died_text, died_rect)
 
+    
+#this is first part of code for menu
+    if menu_state == "pause":
+        world.draw()
+        paused_text = font.render("PAUSED", True, (255, 255, 0))
+        screen.blit(paused_text, paused_text.get_rect(center=(LENGTH//2, HEIGHT//2 - 120)))
+        resume_btn.draw()
+        settings_btn.draw()
+        quit_btn.draw()
+
+    elif menu_state == "settings":
+        world.draw()
+        stitle = font.render("SETTINGS", True, (255, 255, 0))
+        screen.blit(stitle, stitle.get_rect(center=(LENGTH//2, HEIGHT//2 - 100)))
+        audio_btn.draw()
+        sback_btn.draw()
+
+    elif menu_state == "audio":
+        world.draw()
+        atitle = font.render("AUDIO", True, (255, 255, 0))
+        screen.blit(atitle, atitle.get_rect(center=(LENGTH//2, HEIGHT//2 - 100)))
+        status = font.render(f"Sound: {'ON' if sound_on else 'OFF'}", True, (255, 255, 255))
+        screen.blit(status, status.get_rect(center=(LENGTH//2, HEIGHT//2 - 60)))
+        toggle_btn.draw()
+        aback_btn.draw()
+
+    elif menu_state == "end":
+        world.draw()
+        etitle = font.render("LoL FAILED", True, (255, 0, 0))
+        screen.blit(etitle, etitle.get_rect(center=(LENGTH//2, HEIGHT//2 - 80)))
+        restart_btn.draw()
+        mainmenu_btn.draw()
+#this is first part ends here
+
 
     for event in pygame.event.get():#pygame.event.get gives  all events happned in a [list] every frame (60 frame per sec) 
         if event.type == pygame.QUIT : #pygame.QUIT gives  1 if cross red is pressed 
@@ -137,7 +185,51 @@ while gameloop==True:
         if  event.type == pygame.KEYDOWN and event.key==pygame.K_ESCAPE:
             pygame.quit()
             exit()
-    
+            
+#code for menu starts here
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+            if menu_state == "game":
+                menu_state = "pause"
+            elif menu_state == "pause":
+                menu_state = "game"
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+            menu_state = "end"
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            if menu_state == "pause":
+                if resume_btn.is_clicked(mouse_pos):
+                    menu_state = "game"
+                elif settings_btn.is_clicked(mouse_pos):
+                    menu_state = "settings"
+                elif quit_btn.is_clicked(mouse_pos):
+                    pygame.quit()
+                    exit()
+            elif menu_state == "settings":
+                if audio_btn.is_clicked(mouse_pos):
+                    menu_state = "audio"
+                elif sback_btn.is_clicked(mouse_pos):
+                    menu_state = "pause"
+            elif menu_state == "audio":
+                if toggle_btn.is_clicked(mouse_pos):
+                    sound_on = not sound_on
+                    if sound_on:
+                        pygame.mixer.unpause()
+                    else:
+                        pygame.mixer.pause()
+                elif aback_btn.is_clicked(mouse_pos):
+                    menu_state = "settings"
+            elif menu_state == "end":
+                if restart_btn.is_clicked(mouse_pos):
+                    tom = Player(screen, PLAYER_X, PLAYER_Y, PLAYER_FAT, PLAYER_HEIGHT, all_blocks)
+                    game_over = False
+                    hit_cooldown = 0
+                    menu_state = "game"
+                elif mainmenu_btn.is_clicked(mouse_pos):
+                    pygame.quit()
+                    exit()
+#code for menu ends here
     #tom.movement(PLAYER_SPEED) someone make me undersatne why a diff move nad movemet is needed its so hard af to debug
     
         
