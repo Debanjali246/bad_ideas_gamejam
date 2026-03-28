@@ -11,6 +11,7 @@ clock=pygame.time.Clock() #clockobject made
 HEIGHT=608 #we need to write a code to automatically find the size of
 LENGTH=1024 #the screen of the player and adjust the screen size automatically i gess
 FPS=24
+
 PLAYER_FAT=20
 PLAYER_HEIGHT=30
 PLAYER_X=150
@@ -99,7 +100,7 @@ while gameloop==True:
     screen.blit(lives_text, (10, 10))
 
     if not game_over:
-        tom.movement(PLAYER_SPEED)   # ← moved up here
+        tom.movement(PLAYER_SPEED)   #  moved up here (for some reason)
         tom.move()
         tom.draw()
         cat.draw()
@@ -107,14 +108,14 @@ while gameloop==True:
         for i in all_blocks:
             i.draw()
 
-        if hit_cooldown > 0:
+        if hit_cooldown > -1:
             hit_cooldown -= 1
 
         if tom.colliderect(cat) and hit_cooldown <= 0:
             tom.health -= 1
-            hit_cooldown = FPS  # ek sec ke liye buffer de dete hai taaki player ko ek hit ke baad thoda time mile recover karne ke liye
+            hit_cooldown = FPS*2.5  # ek sec ke liye buffer de dete hai taaki player ko ek hit ke baad thoda time mile recover karne ke liye
 
-            if tom.health <= 0:
+            if tom.health < 0 and tom.health < 0:
                 game_over = True
                 dead_sound.play()  # play death sound when game is over
     else:
