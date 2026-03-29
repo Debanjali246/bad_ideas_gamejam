@@ -3,6 +3,7 @@ import os
 GRAVITY = 1 #dono if this is needed
 PLAYER_VEL = -10 #todo see this 
 #maxhealth is 0 to 5 (both included death at -1 health)
+pd=5 #playerditsnce from cat (idle ) this is a todo
 pygame.init()
 class Player(pygame.Rect):
     #pygame.draw.rect(screen, color, rect)and pygame.Rect diffrece todo->dynamically find size of image and 
@@ -81,6 +82,8 @@ class Player(pygame.Rect):
         #todo remove the player as in idle already passed him/her
     
     def helthchange(self):
+        #sosososososos soso many to do to get dinamic size of carter not 32X32 alweasy so to have
+        #pixel perfect collisions
         BASE_DIR = os.path.dirname(__file__)
         sf = self.scale  # used a shortcut plz notice this for no reason
         w = self.orig_w         # original width (just some debugs to solve scaling issues)
@@ -164,7 +167,7 @@ class Player(pygame.Rect):
         
 
         elif self.health==1:
-            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk2h.png"), 32,32)
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk2hh.png"), 32,32)
             self.walk_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.walk_frames]  # ← scaling added
 
             self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom1h.png"))
