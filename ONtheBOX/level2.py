@@ -1,353 +1,352 @@
+#player code   
 import pygame
-from sys import exit #exit() funtion to close game(properly #1)
-from player import Player
-from backgd import Background
-from stuff import Stuff
-from enemy import Enemy
-from buttons import Button
-import os 
+import os
+GRAVITY = 1 #dono if this is needed
+PLAYER_VEL = -10 #todo see this 
+#maxhealth is 0 to 5 (both included death at -1 health)
+pd=5 #playerditsnce from cat (idle ) this is a todo
+pygame.init()
+
 BASE_DIR = os.path.dirname(__file__)
+class Player(pygame.Rect):
+    #pygame.draw.rect(screen, color, rect)and pygame.Rect diffrece todo->dynamically find size of image and 
+    # put accodingly even option toscale
+    def pray(self):
+        BASE_DIR = os.path.dirname(__file__)
+        sf = self.scale
+        self.pray_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "pray.png"), 32, 32)
+        self.pray_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.pray_frames]
+        self.pray_frames_L = [pygame.transform.flip(f, True, False) for f in self.pray_frames]    
+    def loadspritesheet(self,path,framefat,frameheight):
+        sheet=pygame.image.load(path)
+        frames=[]
 
-HEIGHT=608
-LENGTH=1024
-FPS=24
-PLAYER_FAT=20
-PLAYER_HEIGHT=30
-PLAYER_X=150
-PLAYER_Y=150
-PLAYER_SPEED=20
-BLOCKSIZE=32
-GRAVITY = 0.5
-PLAYER_VEL = -10
+        fulllen= sheet.get_width()
+        fullwidth=sheet.get_height()
+        for i in range(0,fulllen,framefat):
+            if i + framefat <= fulllen:  #stupid condition for overflow
+                frame = sheet.subsurface((i, 0, framefat, frameheight))
+                frames.append(frame)
 
-class Level2:
-    
-    def __init__(self):
-        self.gameloop=True
-    def play(self):
-        pygame.mixer.pre_init(44100, -16, 2, 512) # audio settings for better performance
-        pygame.init()
-
-        screen = pygame.display.set_mode((LENGTH,HEIGHT))
-        pygame.display.set_caption("we are on the box")
-
-        ICON = pygame.image.load(os.path.join(BASE_DIR, "caracter", "greenboy.png"))
-        pygame.display.set_icon(ICON)
-
-        clock = pygame.time.Clock()
-
-        # ---- music helper ----
-        # checks Music/ folder first then Music/Music/ so it works regardless of folder structure
-        def music_file(*parts):
-            primary = os.path.join(BASE_DIR, "Music", *parts)
-            if os.path.exists(primary):
-                return primary
-            alternate = os.path.join(BASE_DIR, "Music", "Music", *parts)
-            if os.path.exists(alternate):
-                return alternate
-            raise FileNotFoundError(f"Missing music file: {parts[0]}")
-
-        # background music loops forever underneath everything
-        pygame.mixer.music.load(music_file("Backgroundsound.wav"))
-        pygame.mixer.music.set_volume(0.5)
-        pygame.mixer.music.play(-1)
-
-        # cat sounds play on top of background music using Sound objects
-        cute_cat_sound  = pygame.mixer.Sound(music_file("cat_crying.mp3"))
-        cat_crying_sound = pygame.mixer.Sound(music_file("scary_cat.mp3"))
-        cute_cat_sound.set_volume(0.6)
-        cat_crying_sound.set_volume(0.6)
-        cute_cat_sound.play(-1)
-
-        # sound effects
-        dead_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "Music", "Deadsound.wav"))
-        down_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "Music", "Downsound.wav"))
-        up_sound   = pygame.mixer.Sound(os.path.join(BASE_DIR, "Music", "Upsound.wav"))
-
-        CAT_PROXIMITY = 150
-        current_track = "normal"
-
-        # ---- world ----
-        world = Background(screen,(69,69,69),os.path.join(BASE_DIR, "background", "SKY.png"))
-
-        self.gameloop    = True
-        object      = pygame.Rect(300,400,32,32)
-        cat         = Enemy(screen,LENGTH-((BLOCKSIZE)*6),HEIGHT-(BLOCKSIZE+BLOCKSIZE+25),BLOCKSIZE,BLOCKSIZE,2,None)
-
-        # game state
-        hit_cooldown = 0
-        game_over    = False
-        sound_on     = True
-        menu_state   = "game"  # "game" | "pause" | "settings" | "audio" | "end"
-
-        # ---- floor ----
-        floor = []
-        for i in range(0,LENGTH,BLOCKSIZE):
-            jerry = Stuff(screen,i,HEIGHT-BLOCKSIZE,32,32,os.path.join(BASE_DIR, "lands","forestland.jpeg"),1,None)
-            floor.append(jerry)
-
-        # ---- platforms ----
-        platform_layout = [
-            (6,  10, 14),   # first platform low on the left
-            (13, 17, 11),   # middle one
-            (20, 25, 13),   # longer one in the middle right
-            (28, 31,  9),   # high up on the right side
-            (3,   6, 10),   # small one on the far left
-        ]
-
-        platforms = []
-        for (start_col, end_col, row) in platform_layout:
-            for col in range(start_col, end_col):
-                block = Stuff(
-                    screen,
-                    col * BLOCKSIZE,
-                    row * BLOCKSIZE,
-                    BLOCKSIZE, BLOCKSIZE,
-                    os.path.join(BASE_DIR, "lands", "forestland.jpeg"),
-                    1, None
-                )
-                platforms.append(block)
-
-        all_blocks = floor  #+ [invisiblewall]
-
-        tom = Player(screen,PLAYER_X,PLAYER_Y,PLAYER_FAT,PLAYER_HEIGHT,all_blocks)
-
-        # ---- fonts ----
-        warn_font = pygame.font.SysFont("arialblack", 36)
-        hud_font  = pygame.font.Font(None, 32)
-
-        menu_state = "game"
-        sound_on = True
-        font = pygame.font.Font(None, 32)
-        resume_btn   = Button(screen, "Resume",       LENGTH//2, HEIGHT//2 - 60)
-        settings_btn = Button(screen, "Settings",     LENGTH//2, HEIGHT//2)
-        quit_btn     = Button(screen, "Quit",         LENGTH//2, HEIGHT//2 + 60)
-        audio_btn    = Button(screen, "Audio",        LENGTH//2, HEIGHT//2 - 30)
-        sback_btn    = Button(screen, "Back",         LENGTH//2, HEIGHT//2 + 40)
-        toggle_btn   = Button(screen, "Toggle Sound", LENGTH//2, HEIGHT//2 - 30)
-        aback_btn    = Button(screen, "Back",         LENGTH//2, HEIGHT//2 + 40)
-        restart_btn  = Button(screen, "Restart",      LENGTH//2, HEIGHT//2 - 25)
-        mainmenu_btn = Button(screen, "Main Menu",    LENGTH//2, HEIGHT//2 + 25)
-
-        # ---- spike class ----
-        class Spike:
-            def __init__(self, x, y, w, h, screen, spawn_x, spawn_y):
-                self.rect = pygame.Rect(x, y, w, h)
-                self.screen = screen
-                self.warn_distance = 100
-                self.spawn_x = spawn_x
-                self.spawn_y = spawn_y
-                self.near_spike_jumped = False
-                self.cleared_spike = False
-
-            def draw(self):
-                tip   = (self.rect.centerx, self.rect.top)
-                left  = (self.rect.left,    self.rect.bottom)
-                right = (self.rect.right,   self.rect.bottom)
-                pygame.draw.polygon(self.screen, (34, 54, 28), [tip, left, right])
-                pygame.draw.polygon(self.screen, (22, 38, 18), [tip, left, right], 2)
-
-            def show_warning(self, player, font, LENGTH, HEIGHT):
-                if abs(player.x - self.rect.x) < self.warn_distance:
-                    line1 = font.render("TRAP AHEAD !!  BE CAREFUL !!", True, (220, 20, 20))
-                    line2 = font.render("JUMP TO AVOID", True, (220, 20, 20))
-                    self.screen.blit(line1, (LENGTH//2 - line1.get_width()//2, HEIGHT//2 - 50))
-                    self.screen.blit(line2, (LENGTH//2 - line2.get_width()//2, HEIGHT//2 + 10))
-                    return True
-                return False
-
-            def update(self, player):
-                near_spike = abs(player.x - self.rect.x) < self.warn_distance
-                if near_spike:
-                    if player.vel_y < 0:
-                        self.near_spike_jumped = True
-                    if (self.near_spike_jumped and
-                        player.x <= self.rect.x + self.rect.width and
-                        player.vel_y >= 0):
-                        self.cleared_spike = True
-
-                # walked into spike without jumping = respawn
-                if player.colliderect(self.rect) and player.vel_y >= 0:
-                    player.x = self.spawn_x
-                    player.y = self.spawn_y
-                    self.near_spike_jumped = False
-                    self.cleared_spike = False
-
-            def teleport(self, player, teleport_x, teleport_y):
-                if self.cleared_spike and player.vel_y == 0:
-                    player.x = teleport_x
-                    player.y = teleport_y
-                    self.cleared_spike = False
-                    self.near_spike_jumped = False
-
-        spike = Spike(-300, HEIGHT - BLOCKSIZE - 16, 16, 16, screen, PLAYER_X, PLAYER_Y)
-
-        TELEPORT_X = cat.x + cat.width + 20
-        TELEPORT_Y = cat.y
+        return frames
 
 
-        door_closed_time = 0 #sup;er imp for level change
-        while self.gameloop==True:
+    def __init__(self,gamewindow,startx,starty,fat,tall,tiles):
+        self.gamewindow=gamewindow
+        self.tiles=tiles
+        self.health=5
+        self.scale = 2  # saved so helthchange can use it easily as atribute
+        self.animation_speed = 0.2
 
-            world.draw()
+        BASE_DIR = os.path.dirname(__file__)
+        # player_L=pygame.image.load(image)
+        self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk.png"), 32,32)
+        self.jump_frames = self.jump_image = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jumpframe.png"))
 
-            # HUD - always drawn on top of background regardless of menu state
-            lives_text = hud_font.render(f"Lives: {tom.health}", True, (255, 255, 255))
-            screen.blit(lives_text, (10, 10))
-
-            if not game_over:
-                tom.movement(PLAYER_SPEED)   #  moved up here (for some)
-                tom.move()
-                tom.draw()
-
-                cat.draw()
-                cat.update(tom)
-                cat.show_door(tom)
+        self.state = "pray"
+        self.pray_start_time = pygame.time.get_ticks()
+        self.frame_index = 0
                 
-                for i in all_blocks:
-                    i.draw()
 
-                spike.draw()
-                spike.show_warning(tom, warn_font, LENGTH, HEIGHT)
+        self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom.png"))
+        w = self.imageR.get_width()
+        h = self.imageR.get_height()
+        self.orig_w = w  # ← NEW: saved for helthchange()
+        self.orig_h = h  # ← NEW: saved for helthchange()
+        self.imageR = pygame.transform.scale(self.imageR, (int(w * self.scale), int(h * self.scale)))
+        self.imageL = pygame.transform.flip(self.imageR, True, False)
+        self.image = self.imageR
+        self.direction = "left"
 
-                # hit cooldown counts down so player gets recovery time after being hit
-                if hit_cooldown > 0:
-                    hit_cooldown -= 1
+        self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom.png"))
+        self.idle_frame = pygame.transform.scale(self.idle_frame, (int(w * self.scale), int(h * self.scale)))
 
-                # cat collision - only triggers when cooldown has expired
-                if tom.colliderect(cat) and hit_cooldown <= 0:
-                    tom.health -= 1
-                    hit_cooldown = int(FPS * 2)  # 2 seconds no damage
-                    
-                    
-                    if tom.health < 0:
-                        game_over = True
-                        menu_state = "end"   # go straight to end screen
-                        dead_sound.play()
+        self.walk_frames = [pygame.transform.scale(f, (int(32 * self.scale), int(32 * self.scale))) for f in self.walk_frames]
+        self.jump_frames = pygame.transform.scale(self.jump_frames, (int(20 * self.scale), int(35 * self.scale)))
 
-        #logic to not go past cat
-                keys = pygame.key.get_pressed()
-                if tom.colliderect(cat) and tom.x < cat.x:
-                    if not (keys[pygame.K_a] or keys[pygame.K_LEFT]): #dont do this player will have a flight freese (only freeze repose)
-                        tom.right = cat.left + 22
-        #yep this much
-                spike.update(tom)
-                spike.teleport(tom, TELEPORT_X, TELEPORT_Y)
+        # Flip versions for animation some advance python code must undestand more
+        self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+        self.jump_image_L = pygame.transform.flip(self.jump_image, True, False)
 
-                # proximity sound swap
-                dist = ((tom.x - cat.x)**2 + (tom.y - cat.y)**2) ** 0.5
-                if dist < CAT_PROXIMITY and current_track != "crying":
-                    cute_cat_sound.stop()
-                    cat_crying_sound.play(-1)
-                    current_track = "crying"
-                elif dist >= CAT_PROXIMITY and current_track != "normal":
-                    cat_crying_sound.stop()
-                    cute_cat_sound.play(-1)
-                    current_track = "normal"
-            
-        #this is first part of code for menu
-            if menu_state == "pause":
-                world.draw()
-                paused_text = font.render("PAUSED", True, (255, 255, 0))
-                screen.blit(paused_text, paused_text.get_rect(center=(LENGTH//2, HEIGHT//2 - 120)))
-                resume_btn.draw()
-                settings_btn.draw()
-                quit_btn.draw()
+        # Animationstate
+        self.state = "idle"
+        self.frame_index = 0
+        
 
-            elif menu_state == "settings":
-                world.draw()
-                stitle = font.render("SETTINGS", True, (255, 255, 0))
-                screen.blit(stitle, stitle.get_rect(center=(LENGTH//2, HEIGHT//2 - 100)))
-                audio_btn.draw()
-                sback_btn.draw()
+        self.image = self.idle_frame
+        self.direction = "right"
+        
+        self.vel_x = 0
+        self.vel_y = 0
 
-            elif menu_state == "audio":
-                world.draw()
-                atitle = font.render("AUDIO", True, (255, 255, 0))
-                screen.blit(atitle, atitle.get_rect(center=(LENGTH//2, HEIGHT//2 - 100)))
-                status = font.render(f"Sound: {'ON' if sound_on else 'OFF'}", True, (255, 255, 255))
-                screen.blit(status, status.get_rect(center=(LENGTH//2, HEIGHT//2 - 60)))
-                toggle_btn.draw()
-                aback_btn.draw()
+        # Load jump sound
+        self.jump_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "Music", "Upsound.wav"))  # Adjust path if needed
 
-            elif menu_state == "end":
-                world.draw()
-                etitle = font.render("LoL FAILED", True, (255, 0, 0))
-                screen.blit(etitle, etitle.get_rect(center=(LENGTH//2, HEIGHT//2 - 80)))
-                restart_btn.draw()
-                mainmenu_btn.draw()
-        #this is first part ends here
+        # Load down sound (for down arrow key)
+        self.down_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "Music", "Downsound.wav"))  # Adjust path if needed
 
-            # ---- events ----
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    exit()
+        scaled_width = self.imageR.get_width()
+        scaled_height = self.imageR.get_height()
+        pygame.Rect.__init__(self, startx, starty, scaled_width, scaled_height)
 
-                # P key toggles pause
-                    
-        #code for menu starts here
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-                    if menu_state == "game":
-                        menu_state = "pause"
-                    elif menu_state == "pause":
-                        menu_state = "game"
+        #todo remove the player as in idle already passed him/her
+    
+    def helthchange(self):
+        #sosososososos soso many to do to get dinamic size of carter not 32X32 alweasy so to have
+        #pixel perfect collisions
+        BASE_DIR = os.path.dirname(__file__)
+        sf = self.scale  # used a shortcut plz notice this for no reason
+        w = self.orig_w         # original width (just some debugs to solve scaling issues)
+        h = self.orig_h         # original height
 
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
-                    menu_state = "end"
+        if self.health==5:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk.png"), 32,32)
+            self.walk_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.walk_frames]  # ← scaling added
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    mouse_pos = pygame.mouse.get_pos()
-                    if menu_state == "pause":
-                        if resume_btn.is_clicked(mouse_pos):
-                            menu_state = "game"
-                        elif settings_btn.is_clicked(mouse_pos):
-                            menu_state = "settings"
-                        elif quit_btn.is_clicked(mouse_pos):
-                            pygame.quit()
-                            exit()
-                    elif menu_state == "settings":
-                        if audio_btn.is_clicked(mouse_pos):
-                            menu_state = "audio"
-                        elif sback_btn.is_clicked(mouse_pos):
-                            menu_state = "pause"
-                    elif menu_state == "audio":
-                        if toggle_btn.is_clicked(mouse_pos):
-                            sound_on = not sound_on
-                            if sound_on:
-                                pygame.mixer.unpause()
-                            else:
-                                pygame.mixer.pause()
-                        elif aback_btn.is_clicked(mouse_pos):
-                            menu_state = "settings"
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom.png"))
+            self.imageR = pygame.transform.scale(self.imageR, (int(w * sf), int(h * sf)))  # ← scaling added
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
 
-                    elif menu_state == "end":
-                        if restart_btn.is_clicked(mouse_pos):
-                            # reset everything back to starting state
-                            tom = Player(screen, PLAYER_X, PLAYER_Y, PLAYER_FAT, PLAYER_HEIGHT, all_blocks)
-                            game_over    = False
-                            hit_cooldown = 0
-                            current_track = "normal"
-                            cute_cat_sound.stop()
-                            cute_cat_sound.play(-1)
-                            menu_state = "game"
-                        elif mainmenu_btn.is_clicked(mouse_pos):
-                            pygame.quit()
-                            exit()
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom.png")).convert_alpha()
+            self.idle_frame = pygame.transform.scale(self.idle_frame, (int(w * sf), int(h * sf)))  # ← scaling added
 
-        #code for menu ends here
-            #tom.movement(PLAYER_SPEED) someone make me undersatne why a diff move nad movemet is needed its so hard af to debug
-                    
-            
-            
-            if cat.showing_door and door_closed_time ==0:
-                door_closed_time = pygame.time.get_ticks()
-            if door_closed_time !=0:
-                if pygame.time.get_ticks() - door_closed_time >= 6000:
-                    self.gameloop = False  
-            pygame.draw.rect(screen,(0,250,250),object,0,1,100,-50,90,1110)
-            pygame.display.update()
-            clock.tick(FPS)
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jumpframe.png")).convert_alpha()
+            self.jump_frames = pygame.transform.scale(self.jump_frames, (int(20 * sf), int(35 * sf)))  # ← scaling added
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)
+        
+        elif self.health==4:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk5h.png"), 32,32)
+            self.walk_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.walk_frames]  # ← scaling added
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom4h.png"))
+            self.imageR = pygame.transform.scale(self.imageR, (int(w * sf), int(h * sf)))  # ← scaling added
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom4h.png")).convert_alpha()
+            self.idle_frame = pygame.transform.scale(self.idle_frame, (int(w * sf), int(h * sf)))  # ← scaling added
+
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump5h.png")).convert_alpha()
+            self.jump_frames = pygame.transform.scale(self.jump_frames, (int(20 * sf), int(35 * sf)))  # ← scaling added
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)
+
+        elif self.health==3:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk4h.png"), 32,32)
+            self.walk_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.walk_frames]  # ← scaling added
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom3h.png"))
+            self.imageR = pygame.transform.scale(self.imageR, (int(w * sf), int(h * sf)))  # ← scaling added
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom3h.png")).convert_alpha()
+            self.idle_frame = pygame.transform.scale(self.idle_frame, (int(w * sf), int(h * sf)))  # ← scaling added
+
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump4h.png")).convert_alpha()
+            self.jump_frames = pygame.transform.scale(self.jump_frames, (int(20 * sf), int(35 * sf)))  # ← scaling added
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)
+        
+        elif self.health==2:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk3h.png"), 32,32)
+            self.walk_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.walk_frames]  # ← scaling added
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom2h.png"))
+            self.imageR = pygame.transform.scale(self.imageR, (int(w * sf), int(h * sf)))  # ← scaling added
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom2h.png")).convert_alpha()
+            self.idle_frame = pygame.transform.scale(self.idle_frame, (int(w * sf), int(h * sf)))  # ← scaling added
+
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump3h.png")).convert_alpha()
+            self.jump_frames = pygame.transform.scale(self.jump_frames, (int(20 * sf), int(35 * sf)))  # ← scaling added
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)
+        
+
+        elif self.health==1:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk2hh.png"), 32,32)
+            self.walk_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.walk_frames]  # ← scaling added
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom1h.png"))
+            self.imageR = pygame.transform.scale(self.imageR, (int(w * sf), int(h * sf)))  # ← scaling added
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom1h.png")).convert_alpha()
+            self.idle_frame = pygame.transform.scale(self.idle_frame, (int(w * sf), int(h * sf)))  # ← scaling added
+
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jump2h.png")).convert_alpha()
+            self.jump_frames = pygame.transform.scale(self.jump_frames, (int(20 * sf), int(35 * sf)))  # ← scaling added
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)
+        
+        elif self.health==0:
+            self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk1hh.png"), 32,32)
+            self.walk_frames = [pygame.transform.scale(f, (int(32 * sf), int(32 * sf))) for f in self.walk_frames]  # ← scaling added
+
+            self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom0h.png"))
+            self.imageR = pygame.transform.scale(self.imageR, (int(w * sf), int(h * sf)))  # ← scaling added
+            self.imageL = pygame.transform.flip(self.imageR, True, False)
+            self.image = self.imageR
+
+            self.idle_frame = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom0h.png")).convert_alpha()
+            self.idle_frame = pygame.transform.scale(self.idle_frame, (int(w * sf), int(h * sf)))  # ← scaling added
+
+            self.jump_frames = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom0h.png")).convert_alpha()
+            self.jump_frames = pygame.transform.scale(self.jump_frames, (int(w * sf), int(h * sf)))  # ← scaling added
+
+            # Flip versions for animation some advance python code must undestand more
+            self.walk_frames_L = [pygame.transform.flip(f, True, False) for f in self.walk_frames]
+            self.jump_frames_L = pygame.transform.flip(self.jump_frames, True, False)
+
+    def update_direction(self,speed):
+        #is this neeeded now ? todo justv see
+
+        if self.direction == "right":
+            self.image = self.imageR
+        elif self.direction == "left":
+            self.image = self.imageL
+
+    def collision(self):
+        # horizontal
+        self.x += self.vel_x
+        for tile in self.tiles:
+            if self.colliderect(tile):
+                if self.vel_x > 0:  # moving right
+                    self.right = tile.left
+                elif self.vel_x < 0:  # moving left
+                    self.left = tile.right
+                self.vel_x = 0
+
+        # vertical
+        self.y += self.vel_y
+        for tile in self.tiles:
+            if self.colliderect(tile):
+                if self.vel_y > 0:  # falling
+                    self.bottom = tile.top
+                elif self.vel_y < 0:  # jumping
+                    self.top = tile.bottom
+                self.vel_y = 0
+        
+    def movement(self,speed):
+
+        keys=pygame.key.get_pressed()
+         
+        self.vel_x = 0
+        moving=False
+        
+        if self.state == "pray":  # ← add this
+            return
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+            self.direction = "left"
+            moving=True
+            self.x -= 7
+            # self.x=max(0,self.x-speed)
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+            self.down_sound.play()  # Play down sound when down key is pressed
+            # self.y=min(self.y+speed,self.gamewindow.get_height()-self.height)  # Uncomment if you want down movement
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+            self.direction = "right"
+            moving=True
+            self.x += 7
+            # self.x=min(self.x+speed,self.gamewindow.get_width()-self.width)
+        if keys[pygame.K_w] or keys[pygame.K_UP]:
+            self.jump()
+            moving=True
+
+        # STATE LOGIC for which spritesheet to choose in animation bro
+        if self.vel_y != 0:
+            self.state = "jump"
+        elif moving:
+            self.state = "walk"
+        else:
+            self.state = "idle"
+
+
+
+    def jump(self):
+        # Only jump if standing on a tile or ground
+        on_ground = self.bottom >= self.gamewindow.get_height()
+        for tile in self.tiles:
+            if self.bottom == tile.top and self.right > tile.left and self.left < tile.right:
+                on_ground = True
+        if on_ground:
+            self.vel_y = PLAYER_VEL
+            self.jump_sound.play()  # Play jump sound when jumping    
+        # if self.bottom >= self.gamewindow.get_height() - 24:
+        #     self.vel = PLAYER_VEL
+    def move(self):      
+        self.vel_y += GRAVITY
+       # self.y += self.vel_y tosee todo
+
+        self.collision()
+    
+        # ground collision for now later blocks too
+        if self.bottom >= self.gamewindow.get_height():
+            self.bottom = self.gamewindow.get_height()
+            self.vel_y = 0
+        self.helthchange()
+
+    def draw(self):
+    # SELECT ANIMATION
+        if self.state == "walk":
+            frames = self.walk_frames if self.direction == "right" else self.walk_frames_L
+
+            # ANIMATE logic still uncler gotta study more nad again
+            self.frame_index += self.animation_speed
+            if self.frame_index >= len(frames): #modulo if over 8 go to 0 type shit
+                self.frame_index = 0
+
+            self.image = frames[int(self.frame_index)] #decimal to whole number
+        # elif self.state == "pray":
+        #     frames = self.pray_frames if self.direction == "right" else self.pray_frames_L
+        #     self.frame_index += self.animation_speed
+        #     if self.frame_index >= len(frames):
+        #         self.frame_index = 0
+        #     self.image = frames[int(self.frame_index)]
+        elif self.state == "pray":
+            frames = self.pray_frames if self.direction == "right" else self.pray_frames_L
+
+            # animation
+            self.frame_index += self.animation_speed
+            if self.frame_index >= len(frames):
+                self.frame_index = 0
+
+            self.image = frames[int(self.frame_index)]
+
+            # ⏱️ timer check (5 seconds = 5000 ms)
+            if pygame.time.get_ticks() - self.pray_start_time > 5000:
+                self.state = "idle"   # or whatever next state
+
+        elif self.state == "jump": #jump is just 1 image so no len() needed
+            self.image = self.jump_frames if self.direction == "right" else self.jump_frames_L
+
+        else:
+            self.image = self.idle_frame
+
+        self.gamewindow.blit(self.image, self.topleft)
+        """must find some way to find x and y position to update it and 
+ in rect it was as simple as rect.x nad rect.y to find x and y
+ lol turns out sisnce i inherted rect so i can directly call rect.x lol 
+ yahooooooo
+ 
+
+ #def draw(self):
+     #   self.gamewindow.blit(self.image,(self.topleft))
+ old simple draw is gone now animation wala draw will come
+ """

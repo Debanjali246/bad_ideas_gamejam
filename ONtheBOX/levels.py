@@ -90,8 +90,8 @@ class Level1:
         platform_layout = [
             (6,  10, 14),   # first platform low on the left
             (13, 17, 11),   # middle one
-            (20, 25, 13),   # longer one in the middle right
-            (28, 31,  9),   # high up on the right side
+            (20, 25, 1),   # longer one in the middle right
+            (28, 31,  1),   # high up on the right side
             (3,   6, 10),   # small one on the far left
         ]
 
@@ -192,8 +192,8 @@ class Level1:
             world.draw()
 
             # HUD - always drawn on top of background regardless of menu state
-            lives_text = hud_font.render(f"Lives: {tom.health}", True, (255, 255, 255))
-            screen.blit(lives_text, (10, 10))
+            #lives_text = hud_font.render(f" {tom.health}", True, (255, 255, 255))
+            #screen.blit(lives_text, (10, 10))
 
             if not game_over:
                 tom.movement(PLAYER_SPEED)   #  moved up here (for some)
@@ -272,7 +272,7 @@ class Level1:
 
             elif menu_state == "end":
                 world.draw()
-                etitle = font.render("LoL FAILED", True, (255, 0, 0))
+                etitle = font.render("LoL FAILS !", True, (255, 0, 0))
                 screen.blit(etitle, etitle.get_rect(center=(LENGTH//2, HEIGHT//2 - 80)))
                 restart_btn.draw()
                 mainmenu_btn.draw()

@@ -1,3 +1,4 @@
+#player code   
 import pygame
 import os
 GRAVITY = 1 #dono if this is needed
@@ -42,8 +43,10 @@ class Player(pygame.Rect):
         self.walk_frames = self.loadspritesheet(os.path.join(BASE_DIR, "caracter", "walk.png"), 32,32)
         self.jump_frames = self.jump_image = pygame.image.load(os.path.join(BASE_DIR, "caracter", "jumpframe.png"))
 
-        
-        
+        self.state = "pray"
+        self.pray_start_time = pygame.time.get_ticks()
+        self.frame_index = 0
+                
 
         self.imageR = pygame.image.load(os.path.join(BASE_DIR, "caracter", "tom.png"))
         w = self.imageR.get_width()
@@ -310,12 +313,25 @@ class Player(pygame.Rect):
                 self.frame_index = 0
 
             self.image = frames[int(self.frame_index)] #decimal to whole number
+        # elif self.state == "pray":
+        #     frames = self.pray_frames if self.direction == "right" else self.pray_frames_L
+        #     self.frame_index += self.animation_speed
+        #     if self.frame_index >= len(frames):
+        #         self.frame_index = 0
+        #     self.image = frames[int(self.frame_index)]
         elif self.state == "pray":
             frames = self.pray_frames if self.direction == "right" else self.pray_frames_L
+
+            # animation
             self.frame_index += self.animation_speed
             if self.frame_index >= len(frames):
                 self.frame_index = 0
+
             self.image = frames[int(self.frame_index)]
+
+            # ⏱️ timer check (5 seconds = 5000 ms)
+            if pygame.time.get_ticks() - self.pray_start_time > 5000:
+                self.state = "idle"   # or whatever next state
 
         elif self.state == "jump": #jump is just 1 image so no len() needed
             self.image = self.jump_frames if self.direction == "right" else self.jump_frames_L
